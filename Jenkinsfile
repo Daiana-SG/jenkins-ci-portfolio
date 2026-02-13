@@ -24,17 +24,28 @@ pipeline {
         sh '''
           set -eux
           python3 --version
+
           python3 -m venv .venv
           . .venv/bin/activate
+
           pip install --upgrade pip
-          pip install pytest pytest-junitxml
+          pip install pytest
+
           mkdir -p reports
           pytest -q --junitxml=reports/junit.xml
+          ls -la reports
         '''
       }
       post {
         always {
-          junit 'reports/junit.xml'
+          // Publicar resultados SOLO si existe el archivo
+          script {
+            if (fileExists('reports/junit.xml')) {
+              junit 'reports/junit.xml'
+            } else {
+              echo "No se generó reports/junit.xml (tests no llegaron a correr o fallaron antes)."
+            }
+          }
         }
       }
     }
@@ -46,3 +57,4 @@ pipeline {
     }
   }
 }
+
