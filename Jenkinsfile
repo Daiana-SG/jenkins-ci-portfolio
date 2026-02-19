@@ -49,6 +49,29 @@ pipeline {
         }
       }
     }
+
+    stage('Docker Build & Smoke Test') {
+      steps {
+        sh '''
+          set -eux
+
+          docker --version
+
+          IMAGE="user-validator:${BUILD_NUMBER}"
+
+          echo "Building image $IMAGE"
+          docker build -t "$IMAGE" .
+
+          echo "Running smoke test"
+          CID=$(docker run -d "$IMAGE")
+          sleep 1
+          docker logs "$CID" || true
+          docker rm -f "$CID"
+
+          echo "OK: Docker build + smoke test"
+        '''
+      }
+    }
   }
 
   post {
@@ -57,4 +80,3 @@ pipeline {
     }
   }
 }
-
